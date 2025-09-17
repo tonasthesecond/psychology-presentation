@@ -1,5 +1,5 @@
 import { Camera, Circle, Img, Layout, Line, makeScene2D, Node, Path, Rect, Txt } from "@motion-canvas/2d";
-import { all, any, beginSlide, cancel, chain, createRef, createRefArray, createSignal, easeInBack, easeInCubic, easeInOutCubic, easeInOutQuad, easeOutCubic, linear, loop, sequence, useRandom, Vector2, Vector2Edit, waitFor } from "@motion-canvas/core";
+import { all, any, beginSlide, cancel, chain, createRef, createRefArray, createSignal, easeInBack, easeInCubic, easeInOutCubic, easeInOutQuad, easeInOutSine, easeOutCubic, linear, loop, sequence, useRandom, Vector2, Vector2Edit, waitFor } from "@motion-canvas/core";
 
 export default makeScene2D(function* (view) {
     view.fill('#191919');
@@ -121,29 +121,34 @@ export default makeScene2D(function* (view) {
     layoutRefs[0].opacity(0);
     layoutRefs[1].opacity(0);
     const selector = createRef<Circle>();
+    const lineRef = createRef<Line>();
     stage().add(
         <Circle
             ref={selector}
             fill={'white'}
             size={50}
             y={400}
+            opacity={0}
         />
     );
     stage().add(
         <Line
+            ref={lineRef}
             stroke={'#c1c1c1'}
             lineWidth={10}
             points={[[0, 400], [layoutRefs[layoutRefs.length-1].x(), 400]]}
             zIndex={-1}
             lineCap={'round'}
+            opacity={0}
         />
     );
-    yield* beginSlide('show content');
+    // yield* beginSlide('show content');
     yield* all(
         layoutRefs[0].scale(1, 1, easeInOutCubic),
         layoutRefs[0].opacity(1, 1, easeInOutCubic),
         layoutRefs[1].opacity(1, 1, easeInOutCubic),
-
+        selector().opacity(1, 1, easeInOutCubic),
+        lineRef().opacity(1, 1, easeInOutCubic),
     );
 
     function* selectContent(i: number) {
@@ -199,7 +204,7 @@ export default makeScene2D(function* (view) {
     );
 
     yield* all(
-        you().size(40, 1, easeInOutCubic),
+        you().size(70, 1, easeInOutCubic),
         you().fill(observersColor, 1, easeInOutCubic),
     );
 
@@ -244,9 +249,14 @@ export default makeScene2D(function* (view) {
         var direction = i % 2 == 0 ? 1 : -1;
         yield* layersRefs[i].rotation(layersRefs[i].rotation() + direction*(layers-i)*3, 1, linear);
     }
+    function* colorLoop() {
+        const randomColor = '#' + Math.floor(Math.random()*16777216).toString(16).padStart(6, '0');
+        yield* you().fill(randomColor, 1, easeInOutSine);
+    }
     for (let i = 0; i < layers; i++) {
         yield loop(() => rotateLoop(i));
     }
+    yield loop(() => colorLoop());
     yield* chain(
         ...layersRefs.map((layer) => {
             return layer.opacity(1, 1, easeInOutCubic);
@@ -286,7 +296,7 @@ export default makeScene2D(function* (view) {
     yield loop(() => orbitTime(orbitTime() + 0.01));
 
     yield* sequence(
-        0.5,
+        0.3,
         ...textRefs.map((text, i) => {
             return text.opacity(1, 1, easeInOutCubic);
         })
